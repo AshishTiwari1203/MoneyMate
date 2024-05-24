@@ -46,16 +46,23 @@ router.post('/signup', async (req, res)=>{
     const new_user = await User.create({
         username : req.body.username,
         password: hashedPassword,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
+        FirstName: req.body.FirstName,
+        FastName: req.body.LastName,
     });
 
     //After creating we get a unique __id
-    const user_id = new_user._id;
+    const userId = new_user._id;
+
+    //Give Random balance to the user when he signups
+    await Account.create({
+        userID : userId,
+        balance: 1 + Math.random() * 10000
+    })
+
 
     //Now asigning this id to JWT Token Secret Key
     const token = jwt.sign({
-        user_id
+        userId
     }, JWT_SECRET);
 
     //In the response return the unique id
@@ -111,15 +118,15 @@ router.post('/login', async(req, res)=>{
 
 const UpdateSchema = zod.object({
 	password: zod.string().optional().min(6, {message: "Password is to small"}),
-	firstName: zod.string().optional(),
-	lastName: zod.string().optional()
+	FirstName: zod.string().optional(),
+	LastName: zod.string().optional()
 
 })
 
 //Update User Request
 router.put('/', authMiddleware, async(req, res)=>{
-    const query = req.body();
-    const success = zod.safeParse(query)
+    const body = req.body;
+    const success = zod.safeParse(body)
 
     if(!success){
          res.status(411).json({
@@ -127,10 +134,17 @@ router.put('/', authMiddleware, async(req, res)=>{
         })
     }
 
-    //Update the record in Database
-    User.updateOne({
-        _id : req.userId
-    })
+    const update = {}
+    if (body.FirstName) update.FirstName = body.FirstName;
+    if (body.LastName) update.LastName = body.LastName;
+    if(body.password){
+        // Hash the new password
+      const hashedPassword = await bcrypt.hash(body.password, 10);
+      update.password = hashedPassword;
+    }
+
+     // Update the user record in the database
+    await User.updateOne({ _id: req.userId }, update);
 
     res.status(200).json({
         message: "Updated successfully"
@@ -140,7 +154,30 @@ router.put('/', authMiddleware, async(req, res)=>{
 //Now get the users when searched by there Names
 
 router.get('/bulk', (req, res, next) =>{
-    
+    const filter = req.query.filter || "";
+
+    const foundUsers = User.find({
+        $or:[{
+            FirstName: {
+                "$regex": filter
+            }
+        },{
+            LastName: {
+                "$regex" : filter
+            }
+        }
+    ]
+    })
+
+    //Now we want to return the user details of Fetched user 
+    res.json({
+        i : foundUsers.map(i =>({
+            username : i.username,
+            FirstName : i.FirstName,
+            LastName : i.LastName,
+            _id : i._id
+        }))
+    })
 })
 
 

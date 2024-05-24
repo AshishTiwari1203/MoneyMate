@@ -1,21 +1,19 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-//User Schema created
-const AccountSchema = mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId, // Reference to User model
-        ref: 'User',
-        required: true
-    },
-    balance: {
-        type: Number,
-        required: true
-    }
+// Define the schema for the Account model
+const accountSchema = mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Reference to the User model
+    required: true
+  },
+  balance: {
+    type: Number,
+    default: 0 
+  }
 });
 
-//Creating the model by name "Account" and Exporting it
-const Account = mongoose.model('Account', AccountSchema);
+// Create the Account model using the schema
+const Account = mongoose.model('Account', accountSchema);
 
-module.exports = Account;
-
-
+module.exports = Account
