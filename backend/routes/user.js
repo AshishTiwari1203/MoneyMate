@@ -110,7 +110,7 @@ router.post('/login', async(req, res)=>{
 })
 
 const UpdateSchema = zod.object({
-	password: zod.string().optional(),
+	password: zod.string().optional().min(6, {message: "Password is to small"}),
 	firstName: zod.string().optional(),
 	lastName: zod.string().optional()
 
@@ -118,9 +118,29 @@ const UpdateSchema = zod.object({
 
 //Update User Request
 router.put('/', authMiddleware, async(req, res)=>{
-    const query = req.query();
+    const query = req.body();
+    const success = zod.safeParse(query)
 
+    if(!success){
+         res.status(411).json({
+            message: "Error while updating information"
+        })
+    }
 
+    //Update the record in Database
+    User.updateOne({
+        _id : req.userId
+    })
+
+    res.status(200).json({
+        message: "Updated successfully"
+    })
+})
+
+//Now get the users when searched by there Names
+
+router.get('/bulk', (req, res, next) =>{
+    
 })
 
 
