@@ -1,8 +1,7 @@
 const express = require('express')
 const User = require('../models/user')
 const db = require('../db')
-import { zod } from "zod";
-import { authMiddleware } from "../middleware";
+import { zod } from "zod"
 const bcrypt = require ('bcrypt')
 const authMiddleware = require('../middleware')
 
