@@ -1,34 +1,35 @@
 const express = require('express')
 const User = require('../models/user')
+const JWT_SECRET = require('../config')
 const db = require('../db')
-import { zod } from "zod"
+const zod = require ('zod')
 const bcrypt = require ('bcrypt')
 const authMiddleware = require('../middleware')
 
-const router  = express.router();
+const router  = express.Router();
 
-//Zod signup schema
+// Zod signup schema
 const SignupSchema = zod.object({
-    username : zod.string().email({ message: "Invalid email address" }),
-    password : zod.string().min(6, { message: "Password should be at leat 6 char" }),
-    FirstName : zod.string().min(1, {message: "Enter a valid name"}),
-    LastName : zod.string()
-})
+    username: zod.string().email({ message: "Invalid email address" }),
+    password: zod.string().min(6, { message: "Password should be at least 6 characters" }),
+    FirstName: zod.string().min(1, { message: "Enter a valid name" }),
+    LastName: zod.string().optional()
+});
 
 //Now in future here we can define the get, post calls
-router.post('/signup', async (req, res)=>{
+router.POST('/signup', async (req, res)=>{
     const body = req.body
-    const fl = SignupSchema.safeParse(body);
+    const result = SignupSchema.safeParse(body);
 
-    if(!fl.success){
-        //Send some error msg
-        return res.status(411).json({
-            message: "Email already taken / Incorrect inputs"
-        })
+    if (!result.success) {
+        return res.status(400).json({
+            message: "Invalid input",
+            errors: result.error.errors
+        });
     }
 
-    //Now we have to also check for existing user with the username 
-    const chec_existing_user = User.findone({
+    //Now we have to also check for ex  isting user with the username 
+    const chec_existing_user = await User.findone({
         username: req.body.username
     })
 
@@ -80,7 +81,7 @@ const loginSchema = zod.object({
     
 
 //Now Sign in route
-router.post('/login', async(req, res)=>{
+router.POST('/login', async(req, res)=>{
     const body = req.body();
     const fl = loginSchema.safeParse(body)
 
@@ -116,14 +117,15 @@ router.post('/login', async(req, res)=>{
 })
 
 const UpdateSchema = zod.object({
-	password: zod.string().optional().min(6, {message: "Password is to small"}),
+	// password: zod.string().optional().min(6, {message: "Password is to small"}),
+    password: zod.string().min(6).optional(),
 	FirstName: zod.string().optional(),
 	LastName: zod.string().optional()
 
 })
 
 //Update User Request
-router.put('/', authMiddleware, async(req, res)=>{
+router.PUT('/', authMiddleware, async (req, res)=>{
     const body = req.body;
     const success = zod.safeParse(body)
 

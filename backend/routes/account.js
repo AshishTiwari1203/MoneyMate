@@ -1,7 +1,8 @@
 const express = require('express');
 const Account = require('../models/Account')
 import mongoose from "mongoose";
-import { zod } from "zod"
+// import { zod } from "zod"
+const zod = require ('zod')
 const bcrypt = require ('bcrypt')
 const authMiddleware = require('../middleware')
 
