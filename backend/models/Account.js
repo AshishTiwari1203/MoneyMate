@@ -1,7 +1,8 @@
+// models/Account.js
 const mongoose = require('mongoose');
+// const User = require('./User');   
 
-// Define the schema for the Account model
-const accountSchema = mongoose.Schema({
+const accountSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference to the User model
@@ -13,7 +14,6 @@ const accountSchema = mongoose.Schema({
   }
 });
 
-// Create the Account model using the schema
 const Account = mongoose.model('Account', accountSchema);
 
-module.exports = Account
+module.exports = Account;

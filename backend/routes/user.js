@@ -1,10 +1,13 @@
 const express = require('express')
 const User = require('../models/user')
-const JWT_SECRET = require('../config')
+const { JWT_SECRET } = require("../config");
+const jwt = require('jsonwebtoken');
 const db = require('../db')
 const zod = require ('zod')
 const bcrypt = require ('bcrypt')
 const authMiddleware = require('../middleware')
+const Account = require('../models/Account')
+
 const mongoose = require('mongoose');
 
 const router  = express.Router();
@@ -30,9 +33,10 @@ router.post('/signup', async (req, res)=>{
     }
 
     //Now we have to also check for existing user with the username 
-    const chec_existing_user = await User.findone({
+    const chec_existing_user = await User.findOne({
         username: req.body.username
     })
+
 
     if(chec_existing_user){
         //There is already a user with this username
@@ -44,46 +48,40 @@ router.post('/signup', async (req, res)=>{
     // Hash the password
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    const new_user = await User.create({
+    const user = await User.create({
         username : req.body.username,
         password: hashedPassword,
         FirstName: req.body.FirstName,
         FastName: req.body.LastName,
     });
 
-    //After creating we get a unique __id
-    const userId = new_user._id;
+    const userId = user._id;
 
-    //Give Random balance to the user when he signups
     await Account.create({
-        userID : userId,
+        userId,
         balance: 1 + Math.random() * 10000
     })
 
-
-    //Now asigning this id to JWT Token Secret Key
     const token = jwt.sign({
         userId
     }, JWT_SECRET);
 
-    //In the response return the unique id
     res.json({
-        message:  "User created successfully",
-        token : token
+        message: "User created successfully",
+        token: token
     })
 })
 
 //Schema for signin 
 const loginSchema = zod.object({
-    username : zod.string().email(),
+    username : zod.string().email({message: "Enter valid Email"}),
     password : zod.string()
 })
 
-    
 
 //Now Sign in route
-router.post('/login', async(req, res)=>{
-    const body = req.body();
+router.post('/login', async (req, res)=>{
+    const body = req.body;
     const fl = loginSchema.safeParse(body)
 
     if (!fl.success) {
@@ -103,7 +101,7 @@ router.post('/login', async(req, res)=>{
     }
 
     // Compare the hashed password
-    const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+    const isPasswordValid = await bcrypt.compare(body.password, user.password);
 
     if (!isPasswordValid) {
         return res.status(401).json({
@@ -117,75 +115,80 @@ router.post('/login', async(req, res)=>{
 
 })
 
-// const UpdateSchema = zod.object({
-//     password: zod.string().min(6).optional(),
-//     FirstName: zod.string().optional(),
-//     LastName: zod.string().optional()
-// });
+const UpdateSchema = zod.object({
+    password: zod.string().min(6).optional(),
+    FirstName: zod.string().optional(),
+    LastName: zod.string().optional()
+});
 
-// // Update User Request
-// router.put('/', authMiddleware, async (req, res) => {
-//     const body = req.body;
+// Update User Request
+router.put('/', authMiddleware, async (req, res) => {
+    const body = req.body;
 
-//     const result = UpdateSchema.safeParse(body);
+    const result = UpdateSchema.safeParse(body);
 
-//     if (!result.success) {
-//         return res.status(400).json({
-//             message: "Validation error",
-//             errors: result.error.errors
-//         });
-//     }
+    if (!result.success) {
+        return res.status(400).json({
+            message: "Validation error",
+            errors: result.error.errors
+        });
+    }
 
-//     const update = {};
-//     if (body.FirstName) update.FirstName = body.FirstName;
-//     if (body.LastName) update.LastName = body.LastName;
-//     if (body.password) {
-//         try {
-//             // Hash the new password
-//             const hashedPassword = await bcrypt.hash(body.password, 10);
-//             update.password = hashedPassword;
-//         } catch (error) {
-//             return res.status(500).json({
-//                 message: "Error hashing password"
-//             });
-//         }
-//     }
+    const update = {};
+    if (body.FirstName) update.FirstName = body.FirstName;
+    if (body.LastName) update.LastName = body.LastName;
+    if (body.password) {
+        try {
+            // Hash the new password
+            const hashedPassword = await bcrypt.hash(body.password, 10);
+            update.password = hashedPassword;
+        } catch (error) {
+            return res.status(500).json({
+                message: "Error hashing password"
+            });
+        }
+    }
 
-//     try {
-//         // Update the user record in the database
-//         await User.updateOne({ _id: req.userId }, update);
+    try {
+        // Update the user record in the database
+        await User.updateOne({ _id: req.userId }, update);
 
-//         return res.status(200).json({
-//             message: "Updated successfully"
-//         });
-//     } catch (error) {
-//         return res.status(500).json({
-//             message: "Error updating user information",
-//             error: error.message
-//         });
-//     }
-// });
+        return res.status(200).json({
+            message: "Updated successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error updating user information",
+            error: error.message
+        });
+    }
+});
 
 // Now get the users when searched by their Names
-router.get('/bulk', async (req, res, next) => {
+router.get('/bulk', async (req, res) => {
     const filter = req.query.filter || "";
 
-    const foundUsers = await User.find({
-        $or: [
-            { FirstName: { "$regex": filter, "$options": "i" } },
-            { LastName: { "$regex": filter, "$options": "i" } }
-        ]
-    });
+    const users = await User.find({
+        $or: [{
+            FirstName: {
+                "$regex": filter
+            }
+        }, {
+            LastName: {
+                "$regex": filter
+            }
+        }]
+    })
 
     // Now we want to return the user details of the fetched users 
-    return res.json({
-        users: foundUsers.map(i => ({
-            username: i.username,
-            FirstName: i.FirstName,
-            LastName: i.LastName,
-            _id: i._id
+   res.json({
+        user: users.map(user => ({
+            username: user.username,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            _id: user._id
         }))
-    });
+    })
 });
 
 module.exports = router;
