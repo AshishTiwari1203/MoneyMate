@@ -8,28 +8,10 @@ export default function SendMoney() {
   const id = searchParams.get("id");
   const name = searchParams.get("name");
   const [amount, setAmount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
-
-  const handleTransfer = async () => {
-    try {
-      const res = await axios.post("http://localhost:3000/api/v1/account/transfer", {
-        to: id,
-        amount: amount
-      }, {
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token")
-        }
-      });
-
-      if (res.status === 200) {
-        alert("Transfer successful");
-        navigate('/'); // Navigate to the desired route after successful transfer
-      }
-    } catch (error) {
-      console.error("Error during transfer:", error);
-      alert("Transfer failed: " + error.response.data.message);
-    }
-  };
 
   return (
     <div className="flex justify-center h-screen bg-gray-100">
@@ -62,11 +44,52 @@ export default function SendMoney() {
                 />
               </div>
               <button
-                onClick={handleTransfer}
-                className="justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full bg-green-500 text-white"
+                onClick={async () => {
+                  setIsLoading(true);
+                  setError(null);
+                  setSuccess(null);
+
+                try     {
+                  const res = await axios.post('http://localhost:3000/api/v1/account/transfer', {
+                    to: id,
+                    amount: amount
+                  }, {
+                    headers: {
+                      Authorization: "Bearer " + localStorage.getItem("token")
+                    }
+                  });
+
+                  // console.log(res.data.message);
+                  navigate("/paymentstatus?message=" + res?.data.message);
+
+                  if (res.status === 201) {
+                    setSuccess("Transfer successful");
+                    // Optionally, navigate to another page or refresh the current page
+                    // navigate('/success-page'); 
+                  } else {
+                    setError("Transfer failed");
+                  }
+                } catch (error) {
+                  setError("Transfer failed: " + error.res.data.message);
+                } finally {
+                  setIsLoading(false);
+                }}}
+
+                disabled={isLoading}
+
+                className={`justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full ${isLoading ? 'bg-gray-500' : 'bg-green-500'} text-white`}
               >
-                Initiate Transfer
+                {isLoading ? 'Processing...' : 'Initiate Transfer'}
               </button>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full bg-red-500 text-white"
+              >
+                Cancel & Go Back
+              </button>
+              {error && <p className="text-red-500">{error}</p>}
+              {success && <p className="text-green-500">{success}</p>}
+              
             </div>
           </div>
         </div>
