@@ -11,7 +11,7 @@ export default function Users() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await axios.get(`http://localhost:3000/api/v1/user/bulk?filter=${filter}`);
+                const res = await axios.get(`https://moneymate-681h.onrender.com/api/v1/user/bulk?filter=${filter}`);
                 setUsers(res.data.user);
             } catch (error) {
                 console.error('Error fetching the users:', error);

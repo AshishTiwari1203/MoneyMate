@@ -43,7 +43,7 @@ export default function Signup() {
         <div className="pt-4">
           <Button label={"signup"} onClick={async (e)=>{
             try {
-            const res = await axios.post("http://localhost:3000/api/v1/user/signup", {
+            const res = await axios.post("https://moneymate-681h.onrender.com/api/v1/user/signup", {
               username: email,
               FirstName: firstname,
               LastName: lastname,
