@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function PaymentStatus(){
+    const [searchParams] = useSearchParams();
+    const message = searchParams.get("message");
     const navigate = useNavigate();
 
     useEffect(()=>{

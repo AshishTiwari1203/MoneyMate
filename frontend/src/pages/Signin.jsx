@@ -14,10 +14,13 @@ export default function Signin() {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <div>{email}</div>
-
-      <div>{password}</div>
       <div className="flex-col bg-white rounded-lg shadow-lg p-8 max-w-md w-full items-center justify-center">
+        <button
+          onClick={() => navigate('/')}
+          className="absolute top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded">
+          Home
+        </button>
+
         <Heading label={"Signin"} />
         <SubHeading label={"Enter your Creadentials"} />
         {/* <InputBox placeholder="John" label={"First Name"} /> */}
@@ -32,7 +35,7 @@ export default function Signin() {
         }/>
 
         <div className="pt-4">
-          <Button label={"Sign in"} onClick={async (e)=>{
+          <Button label={"Signin"} onClick={async (e)=>{
             try {
             const res = await axios.post("http://localhost:3000/api/v1/user/login", {
               username: email,

@@ -17,7 +17,12 @@ export default function Signup() {
   return (
     <div className="flex justify-center items-center h-screen">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full items-center justify-center">
-        <Heading label={"Sign up"} />
+        <button
+          onClick={() => navigate('/')}
+          className="absolute top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded">
+          Home
+        </button>
+        <Heading label={"Signup"} />
         <SubHeading label={"Enter your information to create an account"} />
         <InputBox placeholder="John" label={"First Name"} onChange={e =>{
           setFirstname(e.target.value);
@@ -36,7 +41,7 @@ export default function Signup() {
         }   
         }/>
         <div className="pt-4">
-          <Button label={"Sign up"} onClick={async (e)=>{
+          <Button label={"signup"} onClick={async (e)=>{
             try {
             const res = await axios.post("http://localhost:3000/api/v1/user/signup", {
               username: email,
@@ -60,6 +65,7 @@ export default function Signup() {
         </div>
         <BottomWarning label={"Already have an account?"} buttonText={"Sign in"} to={"/signin"} />
       </div>
+      
     </div>
   );
 }
