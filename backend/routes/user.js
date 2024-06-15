@@ -1,5 +1,5 @@
 const express = require('express')
-const User = require('../models/user')
+const User = require('../models/User')
 const { JWT_SECRET } = require("../config");
 const jwt = require('jsonwebtoken');
 const db = require('../db')
